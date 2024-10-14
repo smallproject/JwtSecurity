@@ -1,4 +1,4 @@
-package nl.novi.les17JWT.config;
+package nl.novi.les17JWT;
 
 import nl.novi.les17JWT.security.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
