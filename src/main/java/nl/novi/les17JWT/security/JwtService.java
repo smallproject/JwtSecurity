@@ -26,6 +26,10 @@ public class JwtService {
     private String AUDIENCE;
 
     private String ROLES_CLAIMS_NAME = "roles";
+    private String ORGANISATION = "organisation";
+
+    @Value("${jwt.Organisation_Name}")
+    private String ORGANISATION_NAME;
 
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
@@ -87,6 +91,7 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
         claims.put(ROLES_CLAIMS_NAME, roles);
+        claims.put(ORGANISATION, ORGANISATION_NAME );
         return createToken(claims, userDetails.getUsername(), milliSeconds); //time in milliseconds
     }
 
@@ -116,5 +121,10 @@ public class JwtService {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public String extractOrganisation(String token) {
+        final Claims claims = extractAllClaims(token);
+        return claims.get(ORGANISATION, String.class);
     }
 }

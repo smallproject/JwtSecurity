@@ -30,40 +30,44 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest
-                                            request,
-                                    @NonNull HttpServletResponse
-                                            response,
-                                    @NonNull FilterChain
-                                            filterChain) throws ServletException, IOException {
-        final String authorizationHeader =
-                request.getHeader("Authorization");
-        String username = null;
-        List<GrantedAuthority> roles = new ArrayList<GrantedAuthority>();
-        String jwt = null;
-        if (authorizationHeader != null &&
-                authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            username = jwtService.extractUsername(jwt);
-            roles = jwtService.extractSimpleGrantedAuthorities(jwt);
-        }
-        if (username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
 
-            if (jwtService.validateToken(jwt)) {
-                var usernamePasswordAuthenticationToken = new
-                        UsernamePasswordAuthenticationToken(
-                        username, null,
-                        roles
-                );
-                usernamePasswordAuthenticationToken.setDetails(new
-                        WebAuthenticationDetailsSource().buildDetails(request));
-                //dit is een uitbreiding mocht je meer dat in je token hebben en meer data willen doorgeven.
-                ApiUserDetails ud = new ApiUserDetails(username,jwtService.extractRoles(jwt));
-                usernamePasswordAuthenticationToken.setDetails(ud);
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            }
+        String jwt = extractJwtFromRequest(request);
+        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            processTokenAndSetAuthentication(jwt, request);
         }
+
         filterChain.doFilter(request, response);
     }
+
+    private String extractJwtFromRequest(HttpServletRequest request) {
+        final String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
+        }
+        return null;
+    }
+
+    private void processTokenAndSetAuthentication(String jwt, HttpServletRequest request) {
+        String username = jwtService.extractUsername(jwt);
+        if (username != null && jwtService.validateToken(jwt)) {
+            List<GrantedAuthority> roles = jwtService.extractSimpleGrantedAuthorities(jwt);
+            setAuthentication(username, roles, request, jwt);
+        }
+    }
+
+    private void setAuthentication(String username, List<GrantedAuthority> roles,
+                                   HttpServletRequest request, String jwt) {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(username, null, roles);
+
+        ApiUserDetails userDetails = new ApiUserDetails(username, jwtService.extractRoles(jwt), jwtService.extractOrganisation(jwt));
+        authenticationToken.setDetails(userDetails);
+
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+    }
+
 }

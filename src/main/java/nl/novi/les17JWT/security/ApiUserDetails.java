@@ -13,12 +13,14 @@ import java.util.List;
 public class ApiUserDetails implements UserDetails {
 
     private final UserModel user;
+    private  String organisation = "";
 
     public ApiUserDetails(UserModel user) {
         this.user = user;
     }
 
-    public ApiUserDetails(String username, List<String> roles) {
+    public ApiUserDetails(String username, List<String> roles, String organisation) {
+        this.organisation = organisation;
         user = new UserModel();
         user.setUserName(username);
 

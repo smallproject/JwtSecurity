@@ -39,7 +39,7 @@ public class SecureController {
 
     private String getAuthenticationText(Authentication authentication){
 
-        return authentication.getPrincipal().toString() + " - Authorities: " + getAuthoritiesAsString(authentication);
+        return authentication.getPrincipal().toString() + " - Authorities: " + getAuthoritiesAsString(authentication) ;
     }
 
     public String getAuthoritiesAsString(Authentication authentication) {
